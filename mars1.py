@@ -9,7 +9,7 @@ import pickle
 from mars_sim import *
 
 
-def auction(robots: List[Robot], block: Block) -> Robot:
+def auction(robots: List[Robot], block: Block) -> Tuple[Robot, float]:
     """
     Выбор самого выгодного робота для блока
     """
@@ -27,23 +27,36 @@ def auction(robots: List[Robot], block: Block) -> Robot:
 
 def distributeTasks_auction(robots: List[Robot], blocks: List[Block], goal: Block) -> None:
     '''
-    В процессе разработки, тут типа аукцион, все норм, но когда робот доезжает до цели, он ее не берет почему то
+    
     '''
     free_robots = [robot for robot in robots if robot.target is None and robot.attachedObject is None]
     free_blocks = [block for block in blocks if not block.finish and block.reservedRobot is None]
+    
     while free_robots:
         if not free_blocks:
             for robot in free_robots:
+                #if calcDistance(robot.getPosition(), goal.getPosition()) > EPS_DIST:
                 robot.target = goal
                 return
 
         prices = [(auction(free_robots, block), block) for block in free_blocks]
         (best_robot, best_price), best_block = min(prices, key=lambda i: i[0][1])
         best_robot.target = best_block
+        best_robot.takeObject(best_block)
         best_block.reservedRobot = best_robot
-
+        
         free_robots = [robot for robot in robots if robot.target is None and robot.attachedObject is None]
         free_blocks = [block for block in blocks if not block.finish and block.reservedRobot is None]
+    
+    not_free_robots = [robot for robot in robots if not (robot.target is None)]
+    for robot in not_free_robots:
+        if robot.target is goal and calcDistance(robot.getPosition(), goal.getPosition()) <= EPS_DIST:
+            robot.target = None
+            robot.attachedObject = None
+        elif not (robot.target is None) and calcDistance(robot.getPosition(), robot.target.getPosition()) <= EPS_DIST:
+            robot.takeObject(robot.target)
+            robot.target = goal
+
 
 
 
@@ -205,7 +218,6 @@ def main(scene_name=None):
             break
 
         distributeTasks_auction(robots, blocks, goal)
-        #distributeTasks(robots, blocks, goal)
 
         # Отрисовка объектов
         screen.fill((255, 255, 255))
@@ -226,5 +238,6 @@ def main(scene_name=None):
 
 
 if __name__ == '__main__':
-    main(scene_name='last_env.pickle')
+    #main(scene_name='last_env.pickle')
+    main()
 
