@@ -1,3 +1,6 @@
+#! /usr/bin/env python3.8
+
+
 from typing import List, Tuple
 
 import numpy as np
@@ -87,7 +90,7 @@ class Block(SimObject):
     Блок
     """
     
-    def __init__(self, x: float, y: float) -> None:
+    def __init__(self, x: float, y: float, name: str) -> None:
         """
         Инициализация экземпляра класса
 
@@ -99,7 +102,7 @@ class Block(SimObject):
         super().__init__(x, y, 10, (0, 255, 0))
         self.reservedRobot = None # Зарезирвированный за блоком робот
         self.finish = False       # Признак доставки блока в целевую точку
-
+        self.name = name
 
 
 class Robot(SimObject):
@@ -107,7 +110,7 @@ class Robot(SimObject):
     Робот
     """
 
-    def __init__(self, x: float, y: float, range: float = 2000) -> None:
+    def __init__(self, x: float, y: float, name: str, range: float = 2000) -> None:
         """
         Инициализация экземпляра класса
 
@@ -120,7 +123,8 @@ class Robot(SimObject):
         self.attachedObject = None # Закрепленный блок
         self.target = None         # Цель движения робота
         self.range = range         # Область видимости робота
-    
+        self.name = name
+
     def simulate(self) -> None:
         """
         Симуляция движения робота
@@ -140,10 +144,12 @@ class Robot(SimObject):
 
             self.x += v[0] * 5
             self.y += v[1] * 5
+
         
         if self.attachedObject is not None:
             self.attachedObject.x = self.x
             self.attachedObject.y = self.y
+
     
     def findNearest(self, blocks: List[Block]) -> Block:
         """
@@ -179,3 +185,5 @@ class Robot(SimObject):
 
         if obj is not None and calcDistance(self.getPosition(), obj.getPosition()) < EPS_DIST:
             self.attachedObject = obj
+            obj.reservedRobot = self
+            
